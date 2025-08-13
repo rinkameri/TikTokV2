@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@rinkameri</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .content {
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .profile-section {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .avatar-wrapper {
+            display: inline-block;
+            position: relative;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            transition: all 0.5s ease;
+            transform-style: preserve-3d;
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(150, 50, 200, 0.3);
+            transition: all 0.5s ease;
+            transform: translateZ(30px);
+        }
+
+        .main-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: #f3ec78;
+            text-shadow: 0 0 10px rgba(243, 236, 120, 0.3);
+            letter-spacing: -0.5px;
+            transform: translateZ(40px);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #a0a0b0;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 0.3rem;
+            transform: translateZ(30px);
+        }
+
+        .social-nav {
+            display: grid;
+            gap: 1rem;
+            margin-top: 2rem;
+            transform: translateZ(20px);
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            background: rgba(20, 20, 30, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            transition: all 0.4s ease;
+            transform-style: preserve-3d;
+        }
+
+        .social-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .social-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .social-btn i {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-btn span {
+            font-size: 1.1rem;
+            font-weight: 400;
+            transition: all 0.3s ease;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem 0 0.5rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+            width: 100%;
+            margin-top: 2rem;
+            position: relative;
+            letter-spacing: 0.5px;
+            transform: translateZ(10px);
+        }
+
+        .love-message {
+            text-align: center;
+            width: 100%;
+            margin-top: 1.5rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+            font-style: italic;
+            letter-spacing: 0.5px;
+            transform: translateZ(10px);
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .content {
+                padding: 1.5rem;
+            }
+            
+            .profile-img {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .main-title {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .social-btn {
+                padding: 0.8rem 1rem;
+            }
+            
+            .social-btn i {
+                font-size: 1.3rem;
+            }
+            
+            .social-btn span {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starfield"></canvas>
+    
+    <!-- Floating particles -->
+    <div id="particles"></div>
+    
+    <div class="content">
+        <div class="profile-section">
+            <div class="avatar-wrapper">
+                <img src="https://github.com/rinkameri/TikTok/blob/main/photo.jpg?raw=true" 
+                     alt="Profile Photo" 
+                     class="profile-img">
+            </div>
+            <h1 class="main-title">@rinkameri</h1>
+            <p class="subtitle">Programming & Hacking</p>
+        </div>
+
+        <nav class="social-nav">
+            <a href="https://vk.com/rinkameri" 
+               target="_blank" 
+               rel="noopener"
+               class="social-btn vk-btn">
+                <i class="fab fa-vk"></i>
+                <span>ВКонтакте</span>
+            </a>
+            
+            <a href="https://t.me/McLovinHub" 
+               target="_blank" 
+               rel="noopener"
+               class="social-btn tg-btn">
+                <i class="fab fa-telegram-plane"></i>
+                <span>Telegram</span>
+            </a>
+            
+            <a href="https://tiktok.com/@rinkameri" 
+               target="_blank" 
+               rel="noopener"
+               class="social-btn tt-btn">
+                <i class="fab fa-tiktok"></i>
+                <span>TikTok</span>
+            </a>
+        </nav>
+        
+        <div class="love-message">I love my girlfriend</div>
+        
+        <div class="footer">
+            <p>⌘ Create By Rinkameri♡ | Uploaded on GitHub ⌘</p>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced starfield with Three.js
+        function initStarfield() {
+            const canvas = document.getElementById('starfield');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
+            const renderer = new THREE.WebGLRenderer({ 
+                canvas, 
+                alpha: true,
+                antialias: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Create multiple layers of stars
+            const createStarLayer = (count, size, color, range) => {
+                const geometry = new THREE.BufferGeometry();
+                const material = new THREE.PointsMaterial({
+                    color: color,
+                    size: size,
+                    transparent: true,
+                    opacity: 0.8,
+                    sizeAttenuation: true,
+                    blending: THREE.AdditiveBlending
+                });
+                
+                const vertices = [];
+                for (let i = 0; i < count; i++) {
+                    const x = (Math.random() - 0.5) * range;
+                    const y = (Math.random() - 0.5) * range;
+                    const z = (Math.random() - 0.5) * range;
+                    vertices.push(x, y, z);
+                }
+                
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+                return new THREE.Points(geometry, material);
+            };
+            
+            // Add star layers
+            scene.add(createStarLayer(8000, 0.5, 0xffffff, 2500));  // Distant small stars
+            scene.add(createStarLayer(3000, 1.0, 0xccccff, 2000));  // Medium stars
+            scene.add(createStarLayer(1000, 1.8, 0xffccaa, 1500));  // Closer stars
+            scene.add(createStarLayer(200, 3.0, 0xaaccff, 1000));  // Bright stars
+            
+            // Add colorful nebula effect
+            const nebulaGeometry = new THREE.BufferGeometry();
+            const nebulaMaterial = new THREE.PointsMaterial({
+                color: 0x88aaff,
+                size: 8,
+                transparent: true,
+                opacity: 0.05,
+                sizeAttenuation: true,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const nebulaVertices = [];
+            for (let i = 0; i < 200; i++) {
+                const x = (Math.random() - 0.5) * 3000;
+                const y = (Math.random() - 0.5) * 3000;
+                const z = (Math.random() - 0.5) * 3000;
+                nebulaVertices.push(x, y, z);
+            }
+            
+            nebulaGeometry.setAttribute('position', new THREE.Float32BufferAttribute(nebulaVertices, 3));
+            const nebula = new THREE.Points(nebulaGeometry, nebulaMaterial);
+            scene.add(nebula);
+            
+            camera.position.z = 1;
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Rotate each layer at different speeds
+                scene.children.forEach((layer, index) => {
+                    const speed = 0.00005 * (index + 1);
+                    layer.rotation.x += speed;
+                    layer.rotation.y += speed * 1.3;
+                });
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+        }
+        
+        // Create floating particles
+        function createFloatingParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random properties
+                const size = Math.random() * 5 + 1;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const delay = Math.random() * 5;
+                const duration = 10 + Math.random() * 20;
+                const opacity = 0.2 + Math.random() * 0.5;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                particle.style.opacity = opacity;
+                
+                container.appendChild(particle);
+                
+                // Animate particle
+                gsap.to(particle, {
+                    x: `+=${(Math.random() - 0.5) * 200}`,
+                    y: `+=${(Math.random() - 0.5) * 200}`,
+                    duration: duration,
+                    delay: delay,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "sine.inOut"
+                });
+            }
+        }
+        
+        // Initialize animations with GSAP
+        function initAnimations() {
+            // Set initial states
+            gsap.set(".content", { opacity: 0, y: 50 });
+            gsap.set(".avatar-wrapper", { scale: 0.7, opacity: 0, rotationY: 20 });
+            gsap.set(".main-title", { opacity: 0, y: 20, scale: 0.9 });
+            gsap.set(".subtitle", { opacity: 0, y: 15, scale: 0.9 });
+            gsap.set(".social-btn", { opacity: 0, y: 20, rotationX: 15 });
+            gsap.set(".love-message", { opacity: 0, y: 15 });
+            gsap.set(".footer", { opacity: 0, y: 10 });
+            
+            // Create timeline
+            const tl = gsap.timeline({ defaults: { duration: 1, ease: "power3.out" } });
+            
+            tl.to(".content", { 
+                opacity: 1, 
+                y: 0,
+                duration: 1.5 
+            })
+            .to(".avatar-wrapper", { 
+                scale: 1, 
+                opacity: 1, 
+                rotationY: 0,
+                duration: 1.2 
+            }, "-=1.2")
+            .to(".main-title", { 
+                opacity: 1, 
+                y: 0, 
+                scale: 1,
+                duration: 0.8 
+            }, "-=1")
+            .to(".subtitle", { 
+                opacity: 1, 
+                y: 0, 
+                scale: 1,
+                duration: 0.8 
+            }, "-=0.9")
+            .to(".social-btn", { 
+                opacity: 1, 
+                y: 0, 
+                rotationX: 0,
+                stagger: 0.15, 
+                duration: 0.7 
+            }, "-=0.7")
+            .to(".love-message", { 
+                opacity: 1, 
+                y: 0,
+                duration: 0.8 
+            }, "-=0.6")
+            .to(".footer", { 
+                opacity: 1, 
+                y: 0, 
+                duration: 0.8 
+            }, "-=0.5");
+            
+            // Add hover animations to social buttons
+            document.querySelectorAll('.social-btn').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    gsap.to(btn, {
+                        scale: 1.05,
+                        y: -3,
+                        boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+                        duration: 0.3
+                    });
+                    gsap.to(btn.querySelector('i'), {
+                        rotation: 10,
+                        duration: 0.5
+                    });
+                });
+                
+                btn.addEventListener('mouseleave', () => {
+                    gsap.to(btn, {
+                        scale: 1,
+                        y: 0,
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+                        duration: 0.3
+                    });
+                    gsap.to(btn.querySelector('i'), {
+                        rotation: 0,
+                        duration: 0.5
+                    });
+                });
+            });
+            
+            // Add floating effect to avatar
+            gsap.to(".avatar-wrapper", {
+                y: -10,
+                duration: 4,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+            
+            // Add subtle rotation to content
+            gsap.to(".content", {
+                rotation: 0.5,
+                duration: 15,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+            
+            // Add parallax effect on mouse move
+            document.addEventListener('mousemove', (e) => {
+                const x = (window.innerWidth / 2 - e.clientX) / 50;
+                const y = (window.innerHeight / 2 - e.clientY) / 50;
+                
+                gsap.to(".content", {
+                    rotationY: x * 0.5,
+                    rotationX: y * 0.5,
+                    duration: 1
+                });
+                
+                gsap.to(".avatar-wrapper", {
+                    rotationY: x,
+                    rotationX: y,
+                    duration: 1
+                });
+            });
+        }
+        
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initStarfield();
+            createFloatingParticles();
+            initAnimations();
+        });
+    </script>
+</body>
+</html>
